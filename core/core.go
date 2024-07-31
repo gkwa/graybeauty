@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	"github.com/neurosnap/sentences/english"
 )
 
 func Hello(logger logr.Logger) {
@@ -15,34 +14,44 @@ func Hello(logger logr.Logger) {
 	logger.V(1).Info("Debug: Exiting Hello function")
 }
 
-func SplitSentences(logger logr.Logger, r io.Reader, w io.Writer) error {
-	logger.V(1).Info("Debug: Entering SplitSentences function")
+type Tokenizer interface {
+	Tokenize(text string) []string
+}
 
-	tokenizer, err := english.NewSentenceTokenizer(nil)
-	if err != nil {
-		logger.Error(err, "Failed to create tokenizer")
-		return err
+type SentenceSplitter struct {
+	tokenizer Tokenizer
+	logger    logr.Logger
+}
+
+func NewSentenceSplitter(tokenizer Tokenizer, logger logr.Logger) *SentenceSplitter {
+	return &SentenceSplitter{
+		tokenizer: tokenizer,
+		logger:    logger,
 	}
+}
+
+func (s *SentenceSplitter) SplitSentences(r io.Reader, w io.Writer) error {
+	s.logger.V(1).Info("Debug: Entering SplitSentences function")
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
-		sentenceSegments := tokenizer.Tokenize(line)
+		sentences := s.tokenizer.Tokenize(line)
 
-		for _, s := range sentenceSegments {
-			_, err := w.Write([]byte(strings.TrimSpace(s.Text) + "\n\n"))
-			if err != nil {
-				logger.Error(err, "Failed to write sentence")
+		for _, sentence := range sentences {
+			trimmedSentence := strings.TrimSpace(sentence)
+			if _, err := w.Write([]byte(trimmedSentence + "\n\n")); err != nil {
+				s.logger.Error(err, "Failed to write sentence")
 				return err
 			}
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		logger.Error(err, "Failed to read input")
+		s.logger.Error(err, "Failed to read input")
 		return err
 	}
 
-	logger.V(1).Info("Debug: Exiting SplitSentences function")
+	s.logger.V(1).Info("Debug: Exiting SplitSentences function")
 	return nil
 }

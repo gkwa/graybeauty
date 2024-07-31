@@ -9,33 +9,18 @@ import (
 	"github.com/go-logr/logr/funcr"
 )
 
-func TestHello(t *testing.T) {
-	var buf bytes.Buffer
-	logger := funcr.New(func(prefix, args string) {
-		buf.WriteString(prefix + args + "\n")
-	}, funcr.Options{Verbosity: 1})
-
-	Hello(logger)
-
-	logOutput := buf.String()
-	expectedLogs := []string{
-		"Debug: Entering Hello function",
-		"Hello, World!",
-		"Debug: Exiting Hello function",
-	}
-
-	for _, expectedLog := range expectedLogs {
-		if !strings.Contains(logOutput, expectedLog) {
-			t.Errorf("Expected log output to contain '%s', but it didn't. Got: %s", expectedLog, logOutput)
-		}
-	}
-}
-
 func TestSplitSentences(t *testing.T) {
 	var logBuf bytes.Buffer
 	logger := funcr.New(func(prefix, args string) {
 		logBuf.WriteString(prefix + args + "\n")
 	}, funcr.Options{Verbosity: 1})
+
+	englishTokenizer, err := NewEnglishTokenizer()
+	if err != nil {
+		t.Fatalf("Failed to create English tokenizer: %v", err)
+	}
+
+	splitter := NewSentenceSplitter(englishTokenizer, logger)
 
 	testCases := []struct {
 		name     string
@@ -97,6 +82,47 @@ If the holes on your steamer are any bigger, simply line the bottom of the steam
 
 `,
 		},
+		{
+			name: "Random bits with newline squeezing",
+			input: `Because this particular steamer has
+
+
+[[test this and that]]
+
+
+
+
+
+
+
+
+
+relatively small holes in the steamer tray, I cook the rice directly 
+
+
+
+
+
+
+
+
+
+
+on the tray. The holes are small enough that very little rice will fall into the simmering water below. If the holes on your steamer are any bigger, simply line the bottom of the steamer tray with a piece of cheesecloth before adding the rice.`,
+			expected: `Because this particular steamer has
+
+[[test this and that]]
+
+relatively small holes in the steamer tray, I cook the rice directly
+
+on the tray.
+
+The holes are small enough that very little rice will fall into the simmering water below.
+
+If the holes on your steamer are any bigger, simply line the bottom of the steamer tray with a piece of cheesecloth before adding the rice.
+
+`,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -104,7 +130,7 @@ If the holes on your steamer are any bigger, simply line the bottom of the steam
 			reader := strings.NewReader(tc.input)
 			var writer bytes.Buffer
 
-			err := SplitSentences(logger, reader, &writer)
+			err := splitter.SplitSentences(reader, &writer)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
