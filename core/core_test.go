@@ -5,22 +5,15 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-
-	"github.com/go-logr/logr/funcr"
 )
 
 func TestSplitSentences(t *testing.T) {
-	var logBuf bytes.Buffer
-	logger := funcr.New(func(prefix, args string) {
-		logBuf.WriteString(prefix + args + "\n")
-	}, funcr.Options{Verbosity: 1})
-
 	englishTokenizer, err := NewEnglishTokenizer()
 	if err != nil {
 		t.Fatalf("Failed to create English tokenizer: %v", err)
 	}
 
-	splitter := NewSentenceSplitter(englishTokenizer, logger)
+	splitter := NewSentenceSplitter(englishTokenizer)
 
 	testCases := []struct {
 		name     string
@@ -140,18 +133,6 @@ If the holes on your steamer are any bigger, simply line the bottom of the steam
 				t.Errorf("Mismatch in split sentences:\n%s", diffStrings(tc.expected, result))
 			}
 		})
-	}
-
-	logOutput := logBuf.String()
-	expectedLogs := []string{
-		"Debug: Entering SplitSentences function",
-		"Debug: Exiting SplitSentences function",
-	}
-
-	for _, expectedLog := range expectedLogs {
-		if !strings.Contains(logOutput, expectedLog) {
-			t.Errorf("Expected log output to contain '%s', but it didn't. Got: %s", expectedLog, logOutput)
-		}
 	}
 }
 
