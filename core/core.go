@@ -2,7 +2,9 @@ package core
 
 import (
 	"bufio"
+	"bytes"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -47,4 +49,26 @@ func (s *SentenceSplitter) SplitSentences(r io.Reader, w io.Writer) error {
 	}
 
 	return nil
+}
+
+func SplitSentencesInFile(path string) error {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	reader := bytes.NewReader(content)
+	englishTokenizer, err := NewEnglishTokenizer()
+	if err != nil {
+		return err
+	}
+
+	splitter := NewSentenceSplitter(englishTokenizer)
+	var writer bytes.Buffer
+	err = splitter.SplitSentences(reader, &writer)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, writer.Bytes(), 0)
 }

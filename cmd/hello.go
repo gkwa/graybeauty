@@ -1,11 +1,7 @@
 package cmd
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/gkwa/graybeauty/core"
 	"github.com/spf13/cobra"
@@ -13,32 +9,16 @@ import (
 
 var helloCmd = &cobra.Command{
 	Use:   "hello",
-	Short: "A brief description of your command",
+	Short: "Split sentences in a file",
 	Args:  cobra.ExactArgs(1),
-	Long:  `A longer description that spans multiple lines and likely contains examples and usage of using your command.`,
+	Long:  `This command splits sentences in the specified file using the core package's sentence splitter.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		path := args[0]
-		reader := strings.NewReader(path)
-
-		englishTokenizer, err := core.NewEnglishTokenizer()
+		err := core.SplitSentencesInFile(path)
 		if err != nil {
-			return fmt.Errorf("NewEnglishTokenizer returned error: %v", err)
+			return fmt.Errorf("error processing file: %v", err)
 		}
-
-		splitter := core.NewSentenceSplitter(englishTokenizer)
-
-		var writer bytes.Buffer
-		err = splitter.SplitSentences(reader, &writer)
-		if err != nil {
-			return errors.New("could ")
-		}
-
-		if err := os.WriteFile(path, writer.Bytes(), 0o600); err != nil {
-			fmt.Println("Error:", err)
-			return fmt.Errorf("error writing back to %s: %v", path, err)
-
-		}
-
+		fmt.Printf("Successfully processed file: %s\n", path)
 		return nil
 	},
 }
