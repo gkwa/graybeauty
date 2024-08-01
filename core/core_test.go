@@ -21,13 +21,15 @@ func TestSplitSentences(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Single sentence",
-			input:    "This is a single sentence.",
-			expected: "This is a single sentence.\n\n",
+			name:  "Single sentence",
+			input: `This is a single sentence.`,
+			expected: `This is a single sentence.
+
+`,
 		},
 		{
 			name:  "Multiple sentences",
-			input: "This is the first sentence. This is the second sentence. And this is the third.",
+			input: `This is the first sentence. This is the second sentence. And this is the third.`,
 			expected: `This is the first sentence.
 
 This is the second sentence.
@@ -38,7 +40,7 @@ And this is the third.
 		},
 		{
 			name:  "Sentence with abbreviation",
-			input: "Mr. Smith went to Washington D.C. He had a meeting.",
+			input: `Mr. Smith went to Washington D.C. He had a meeting.`,
 			expected: `Mr. Smith went to Washington D.C.
 
 He had a meeting.
