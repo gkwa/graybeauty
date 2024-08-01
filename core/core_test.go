@@ -118,6 +118,21 @@ If the holes on your steamer are any bigger, simply line the bottom of the steam
 
 `,
 		},
+		{
+			name: "Markdown embedded",
+			input: `This is some markdown:
+
+- item 1
+- item 2
+`,
+			expected: `This is some markdown:
+
+- item 1
+
+- item 2
+
+`,
+		},
 	}
 
 	for _, tc := range testCases {
