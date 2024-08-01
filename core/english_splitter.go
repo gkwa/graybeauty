@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-// EnglishSplitter implements the SplitterStrategy for English text
 type EnglishSplitter struct {
 	tokenizer Tokenizer
 }
@@ -33,5 +32,9 @@ func (s *EnglishSplitter) SplitSentences(r io.Reader, w io.Writer) error {
 		}
 	}
 
-	return scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	return nil
 }
