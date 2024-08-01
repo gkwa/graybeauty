@@ -3,18 +3,11 @@ package core
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"strings"
-
-	"github.com/go-logr/logr"
 )
-
-func Hello(logger logr.Logger) {
-	logger.V(1).Info("Debug: Entering Hello function")
-	logger.Info("Hello, World!")
-	logger.V(1).Info("Debug: Exiting Hello function")
-}
 
 type Tokenizer interface {
 	Tokenize(text string) []string
@@ -28,6 +21,39 @@ func NewSentenceSplitter(tokenizer Tokenizer) *SentenceSplitter {
 	return &SentenceSplitter{
 		tokenizer: tokenizer,
 	}
+}
+
+func ProcessFile(path string, writeFlag bool) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("error reading file: %v", err)
+	}
+
+	englishTokenizer, err := NewEnglishTokenizer()
+	if err != nil {
+		return "", fmt.Errorf("error creating tokenizer: %v", err)
+	}
+
+	splitter := NewSentenceSplitter(englishTokenizer)
+	var buf bytes.Buffer
+
+	err = splitter.SplitSentences(bytes.NewReader(content), &buf)
+	if err != nil {
+		return "", fmt.Errorf("error splitting sentences: %v", err)
+	}
+
+	if writeFlag {
+		if !bytes.Equal(content, buf.Bytes()) {
+			err = os.WriteFile(path, buf.Bytes(), 0o644)
+			if err != nil {
+				return "", fmt.Errorf("error writing file: %v", err)
+			}
+			return fmt.Sprintf("Successfully processed and updated file: %s", path), nil
+		}
+		return fmt.Sprintf("No changes made to file: %s", path), nil
+	}
+
+	return buf.String(), nil
 }
 
 func (s *SentenceSplitter) SplitSentences(r io.Reader, w io.Writer) error {
@@ -49,26 +75,4 @@ func (s *SentenceSplitter) SplitSentences(r io.Reader, w io.Writer) error {
 	}
 
 	return nil
-}
-
-func SplitSentencesInFile(path string) error {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	reader := bytes.NewReader(content)
-	englishTokenizer, err := NewEnglishTokenizer()
-	if err != nil {
-		return err
-	}
-
-	splitter := NewSentenceSplitter(englishTokenizer)
-	var writer bytes.Buffer
-	err = splitter.SplitSentences(reader, &writer)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(path, writer.Bytes(), 0)
 }
