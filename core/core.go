@@ -1,27 +1,9 @@
 package core
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"io"
 	"os"
-	"strings"
 )
-
-type Tokenizer interface {
-	Tokenize(text string) []string
-}
-
-type SentenceSplitter struct {
-	tokenizer Tokenizer
-}
-
-func NewSentenceSplitter(tokenizer Tokenizer) *SentenceSplitter {
-	return &SentenceSplitter{
-		tokenizer: tokenizer,
-	}
-}
 
 func ProcessFile(path string, writeFlag bool) (string, error) {
 	content, err := os.ReadFile(path)
@@ -29,22 +11,19 @@ func ProcessFile(path string, writeFlag bool) (string, error) {
 		return "", fmt.Errorf("error reading file: %v", err)
 	}
 
-	englishTokenizer, err := NewEnglishTokenizer()
+	splitter, err := NewDefaultSentenceSplitter()
 	if err != nil {
-		return "", fmt.Errorf("error creating tokenizer: %v", err)
+		return "", fmt.Errorf("error creating sentence splitter: %v", err)
 	}
 
-	splitter := NewSentenceSplitter(englishTokenizer)
-	var buf bytes.Buffer
-
-	err = splitter.SplitSentences(bytes.NewReader(content), &buf)
+	processedContent, err := splitter.Process(content)
 	if err != nil {
-		return "", fmt.Errorf("error splitting sentences: %v", err)
+		return "", fmt.Errorf("error processing content: %v", err)
 	}
 
 	if writeFlag {
-		if !bytes.Equal(content, buf.Bytes()) {
-			err = os.WriteFile(path, buf.Bytes(), 0o644)
+		if string(content) != string(processedContent) {
+			err = os.WriteFile(path, processedContent, 0)
 			if err != nil {
 				return "", fmt.Errorf("error writing file: %v", err)
 			}
@@ -53,26 +32,5 @@ func ProcessFile(path string, writeFlag bool) (string, error) {
 		return fmt.Sprintf("No changes made to file: %s", path), nil
 	}
 
-	return buf.String(), nil
-}
-
-func (s *SentenceSplitter) SplitSentences(r io.Reader, w io.Writer) error {
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		line := scanner.Text()
-		sentences := s.tokenizer.Tokenize(line)
-
-		for _, sentence := range sentences {
-			trimmedSentence := strings.TrimSpace(sentence)
-			if _, err := w.Write([]byte(trimmedSentence + "\n\n")); err != nil {
-				return err
-			}
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	return nil
+	return string(processedContent), nil
 }
