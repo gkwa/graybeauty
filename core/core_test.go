@@ -133,6 +133,25 @@ If the holes on your steamer are any bigger, simply line the bottom of the steam
 
 `,
 		},
+		{
+			name: "Markdown embedded",
+			input: `## Overview
+
+A [Kubernetes operator](https://www.redhat.com/en/resources/oreilly-kubernetes-operators-automation-ebook?intcmp=701f2000001OMH6AAO) is a method of packaging, deploying, and managing a Kubernetes application. A Kubernetes application is both deployed on [Kubernetes](https://www.redhat.com/en/topics/containers/what-is-kubernetes) and managed using the Kubernetes API (application programming interface) and kubectl tooling.
+
+A Kubernetes operator is an application-specific controller that extends the functionality of the Kubernetes API to create, configure, and manage instances of complex applications on behalf of a Kubernetes user.
+
+`,
+			expected: `## Overview
+
+A [Kubernetes operator](https://www.redhat.com/en/resources/oreilly-kubernetes-operators-automation-ebook?intcmp=701f2000001OMH6AAO) is a method of packaging, deploying, and managing a Kubernetes application.
+
+A Kubernetes application is both deployed on [Kubernetes](https://www.redhat.com/en/topics/containers/what-is-kubernetes) and managed using the Kubernetes API (application programming interface) and kubectl tooling.
+
+A Kubernetes operator is an application-specific controller that extends the functionality of the Kubernetes API to create, configure, and manage instances of complex applications on behalf of a Kubernetes user.
+
+`,
+		},
 	}
 
 	for _, tc := range testCases {
