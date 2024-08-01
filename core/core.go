@@ -5,9 +5,11 @@ import (
 )
 
 func ProcessFile(path string, writeFlag bool) (string, error) {
-	processor, err := NewFileProcessor()
+	splitter, err := NewEnglishSplitter()
 	if err != nil {
-		return "", fmt.Errorf("error creating file processor: %v", err)
+		return "", fmt.Errorf("error creating English splitter: %v", err)
 	}
+
+	processor := NewFileProcessor(splitter)
 	return processor.ProcessFile(path, writeFlag)
 }

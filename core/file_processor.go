@@ -8,15 +8,11 @@ import (
 )
 
 type FileProcessor struct {
-	splitter *SentenceSplitter
+	splitter SplitterStrategy
 }
 
-func NewFileProcessor() (*FileProcessor, error) {
-	splitter, err := NewDefaultSentenceSplitter()
-	if err != nil {
-		return nil, fmt.Errorf("error creating sentence splitter: %v", err)
-	}
-	return &FileProcessor{splitter: splitter}, nil
+func NewFileProcessor(splitter SplitterStrategy) *FileProcessor {
+	return &FileProcessor{splitter: splitter}
 }
 
 func (fp *FileProcessor) ProcessFile(path string, writeFlag bool) (string, error) {
@@ -25,10 +21,13 @@ func (fp *FileProcessor) ProcessFile(path string, writeFlag bool) (string, error
 		return "", fmt.Errorf("error reading file: %v", err)
 	}
 
-	processedContent, err := fp.splitter.Process(content)
+	var buf bytes.Buffer
+	err = fp.splitter.SplitSentences(bytes.NewReader(content), &buf)
 	if err != nil {
 		return "", fmt.Errorf("error processing content: %v", err)
 	}
+
+	processedContent := buf.Bytes()
 
 	if writeFlag {
 		err = fp.writeProcessedContent(path, processedContent)
